@@ -40,17 +40,20 @@ async def modify_code(request: CodeModificationRequest):
     Returns explanation, new code, and diff of changes.
     """
     response = await openai_client.chat.completions.create(
-        # model="gpt-4.1-nano-2025-04-14",
-        model="gpt-3.5-turbo",
+        model="gpt-4.1-nano-2025-04-14",
+        # model="gpt-3.5-turbo",
         messages=[
             {
                 "role": "system",
                 "content": (
-                    "You’re an AI assistant for game development code. "
-                    "When I give you a code snippet and a change request, reply with:\n\n"
+                    "You are an AI assistant specialized in game development. "
+                    "Your job is to help game developers improve their code snippets by making modifications based on user instructions.\n\n"
+                    "Always reply with:\n"
                     "### Explanation:\n- Short bullet points explaining what you did and why.\n\n"
                     "### Code:\n"
-                    "The full updated code snippet."
+                    "-The full updated code snippet.\n\n"
+                    "Focus on clean, optimized, and game-performance-friendly code. "
+                    "Preserve any game logic unless the user asks to modify it."
                 )
             },
             {
