@@ -17,7 +17,7 @@ class CodeModificationRequest(BaseModel):
 # Initialize FastAPI app
 app = FastAPI(title="Code Modifier API")
 
-# Configure CORS for frontend access
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,7 +30,7 @@ def serve_editor():
     """Serve the main editor page."""
     return FileResponse("frontend/index.html")
 
-# Mount static files for frontend assets
+# Mount static files
 app.mount("/static", StaticFiles(directory="frontend", html=False), name="static")
 
 @app.post("/modify")
@@ -40,7 +40,8 @@ async def modify_code(request: CodeModificationRequest):
     Returns explanation, new code, and diff of changes.
     """
     response = await openai_client.chat.completions.create(
-        model="gpt-4.1-nano-2025-04-14",
+        # model="gpt-4.1-nano-2025-04-14",
+        model="gpt-3.5-turbo",
         messages=[
             {
                 "role": "system",

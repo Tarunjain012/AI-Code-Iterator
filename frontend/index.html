@@ -36,6 +36,20 @@
 
     .editor-section {
       margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .utility-buttons {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin-bottom: 0.5rem;
+    }
+
+    .input-container {
+      position: relative;
+      width: 100%;
     }
 
     textarea {
@@ -65,6 +79,7 @@
     .button-group {
       margin-top: 1rem;
       display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
     }
 
@@ -74,11 +89,21 @@
       border-radius: 8px;
       background: var(--primary-color);
       color: #fff;
-      font-size: 1rem;
+      font-size: 0.95rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       transition: all 0.2s ease;
+    }
+
+    .primary-action {
+      font-size: 1.1rem;
+      padding: 0.85rem 2rem;
+    }
+
+    .secondary-action {
+      font-size: 0.9rem;
+      padding: 0.65rem 1.25rem;
     }
 
     button:hover:not(:disabled) {
@@ -124,6 +149,18 @@
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
+
+    .prompt-container {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 1rem;
+    }
+
+    .prompt-container input {
+      flex: 1;
+      margin-top: 0;
+    }
   </style>
 </head>
 <body>
@@ -131,12 +168,26 @@
     <h2>AI Code Iterator</h2>
 
     <div class="editor-section">
-      <textarea id="code" placeholder="Paste your code here..."></textarea>
-      <input id="prompt" placeholder="Describe the changes you want..." />
-      
-      <div class="button-group">
-        <button id="run">Generate Changes</button>
-        <button id="apply" disabled>Apply Changes</button>
+      <div class="utility-buttons">
+        <button id="reset" class="secondary-action" style="background-color: lightcoral; color: white;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" fill="currentColor"/>
+            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966C11.36 2.04 11.5 2.5 11.5 3c0 .5-.14.96-.33 1.692l-2.36 1.966A.25.25 0 0 1 8 6.466V4.466z" fill="currentColor"/>
+          </svg>
+          Reset Editor
+        </button>
+      </div>
+      <div class="input-container">
+        <textarea id="code" placeholder="Paste your code here..."></textarea>
+      </div>
+      <div class="prompt-container">
+        <input id="prompt" placeholder="Describe the changes you want..." />
+        <button id="run" class="primary-action">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+            <path d="M8 0L10.06 5.94L16 8L10.06 10.06L8 16L5.94 10.06L0 8L5.94 5.94L8 0Z" fill="currentColor"/>
+          </svg>
+          Generate Changes
+        </button>
       </div>
     </div>
 
@@ -147,19 +198,43 @@
 
     <div class="section">
       <h3>Changes</h3>
-      <pre id="diff"></pre>
+      <div id="diff" style="font-family: 'Consolas', monospace; font-size: 0.9rem;"></div>
+      <div class="button-group" style="margin-top: 1.5rem; justify-content: flex-end;">
+        <button id="apply" class="secondary-action" disabled>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+            <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z" fill="currentColor"/>
+          </svg>
+          Integrate Code
+        </button>
+      </div>
     </div>
   </div>
 
   <script>
     const runBtn = document.getElementById("run");
     const applyBtn = document.getElementById("apply");
+    const resetBtn = document.getElementById("reset");
     const codeEl = document.getElementById("code");
     const promptEl = document.getElementById("prompt");
     const diffEl = document.getElementById("diff");
     const explanationEl = document.getElementById("explanation");
 
     let currentSuggestion = "";
+
+    function formatDiff(diffText) {
+      const lines = diffText.split('\n');
+      return lines.map(line => {
+        if (line.startsWith('+') && !line.startsWith('+++')) {
+          return `<div style="background:#e6ffed; color:#22863a; padding:2px;">${line}</div>`;
+        } else if (line.startsWith('-') && !line.startsWith('---')) {
+          return `<div style="background:#ffeef0; color:#cb2431; padding:2px;">${line}</div>`;
+        } else if (line.startsWith('@@')) {
+          return `<div style="background:#f1f8ff; color:#0366d6; font-weight:bold; padding:2px;">${line}</div>`;
+        } else {
+          return `<div style="padding:2px;">${line}</div>`;
+        }
+      }).join('');
+    }
 
     runBtn.addEventListener("click", async () => {
       runBtn.disabled = true;
@@ -178,7 +253,7 @@
         const { explanation, new_code, diff } = await response.json();
         currentSuggestion = new_code;
         explanationEl.textContent = explanation;
-        diffEl.textContent = diff;
+        diffEl.innerHTML = formatDiff(diff);
         applyBtn.disabled = false;
       } catch (error) {
         console.error("Error:", error);
@@ -192,6 +267,36 @@
     applyBtn.addEventListener("click", () => {
       codeEl.value = currentSuggestion;
       applyBtn.disabled = true;
+
+      // Clear old diff
+      diffEl.innerHTML = "";
+
+      // Highlight success
+      codeEl.style.border = "2px solid #22c55e";
+      codeEl.style.boxShadow = "0 0 8px #22c55e";
+
+      const successMsg = document.createElement("div");
+      successMsg.textContent = "✅ Changes Applied!";
+      successMsg.style.color = "#22c55e";
+      successMsg.style.marginTop = "10px";
+      successMsg.style.fontWeight = "bold";
+      codeEl.parentNode.insertBefore(successMsg, codeEl.nextSibling);
+
+      setTimeout(() => {
+        codeEl.style.border = "1px solid var(--border-color)";
+        codeEl.style.boxShadow = "none";
+        successMsg.remove();
+      }, 2500);
+    });
+
+    resetBtn.addEventListener("click", () => {
+      if (confirm("Clear all code and prompt?")) {
+        codeEl.value = "";
+        promptEl.value = "";
+        explanationEl.textContent = "";
+        diffEl.innerHTML = "";
+        applyBtn.disabled = true;
+      }
     });
   </script>
 </body>
