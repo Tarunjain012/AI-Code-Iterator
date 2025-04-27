@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Code Iterator</title>
+  <style>
+    :root {
+      --primary-color: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg-color: #f9fafb;
+      --text-color: #333;
+      --border-color: #ccc;
+      --code-bg: #eef2ff;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg-color);
+      margin: 0;
+      padding: 2rem;
+      color: var(--text-color);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 2rem;
+    }
+
+    .editor-section {
+      margin-bottom: 2rem;
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+      padding: 1rem;
+      font-family: 'Consolas', monospace;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: #fff;
+      resize: vertical;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 1rem;
+      font-size: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .button-group {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary-color);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      background: #a5b4fc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .section {
+      margin-top: 2rem;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    pre {
+      background: var(--code-bg);
+      padding: 1rem;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      font-family: 'Consolas', monospace;
+      font-size: 0.9rem;
+    }
+
+    .spinner {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid var(--primary-color);
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>AI Code Iterator</h2>
+
+    <div class="editor-section">
+      <textarea id="code" placeholder="Paste your code here..."></textarea>
+      <input id="prompt" placeholder="Describe the changes you want..." />
+      
+      <div class="button-group">
+        <button id="run">Generate Changes</button>
+        <button id="apply" disabled>Apply Changes</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Explanation</h3>
+      <pre id="explanation"></pre>
+    </div>
+
+    <div class="section">
+      <h3>Changes</h3>
+      <pre id="diff"></pre>
+    </div>
+  </div>
+
+  <script>
+    const runBtn = document.getElementById("run");
+    const applyBtn = document.getElementById("apply");
+    const codeEl = document.getElementById("code");
+    const promptEl = document.getElementById("prompt");
+    const diffEl = document.getElementById("diff");
+    const explanationEl = document.getElementById("explanation");
+
+    let currentSuggestion = "";
+
+    runBtn.addEventListener("click", async () => {
+      runBtn.disabled = true;
+      runBtn.innerHTML = '<span class="spinner"></span>Processing...';
+
+      try {
+        const response = await fetch("/modify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: codeEl.value,
+            prompt: promptEl.value
+          })
+        });
+
+        const { explanation, new_code, diff } = await response.json();
+        currentSuggestion = new_code;
+        explanationEl.textContent = explanation;
+        diffEl.textContent = diff;
+        applyBtn.disabled = false;
+      } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred. Please check the console for details.");
+      } finally {
+        runBtn.disabled = false;
+        runBtn.textContent = "Generate Changes";
+      }
+    });
+
+    applyBtn.addEventListener("click", () => {
+      codeEl.value = currentSuggestion;
+      applyBtn.disabled = true;
+    });
+  </script>
+</body>
+</html>

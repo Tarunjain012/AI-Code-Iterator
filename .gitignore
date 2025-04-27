@@ -1,0 +1,32 @@
+# Node modules
+node_modules/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files
+.env
+
+# Build output
+dist/
+build/
+
+# Editor settings
+.vscode/
+
+# Temporary files
+*.tmp
+*.swp
+
+# Python cache
+__pycache__/
+*.pyc
